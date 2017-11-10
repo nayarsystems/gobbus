@@ -24,6 +24,7 @@ type frame struct {
 	data    [8]byte
 }
 
+// NewCanFrame creates a frame ready to be sent to the socketcan module
 func NewCanFrame(id uint32, ty FrameType, data []byte) ([]byte, error) {
 	frame := &frame{id: id, dlc: uint8(len(data))}
 
@@ -35,21 +36,33 @@ func NewCanFrame(id uint32, ty FrameType, data []byte) ([]byte, error) {
 
 	switch ty {
 	case SFF:
+		if id > unix.CAN_SFF_MASK {
+			return nil, fmt.Errorf("SFF frame type IDs only support up to 11 bits (maximum value %d)", unix.CAN_SFF_MASK)
+		}
 		frame.id &= unix.CAN_SFF_MASK
 	case EFF:
+		if id > unix.CAN_EFF_MASK {
+			return nil, fmt.Errorf("EFF frame type IDs only support up to 29 bits (maximum value %d)", unix.CAN_EFF_MASK)
+		}
 		frame.id &= unix.CAN_EFF_MASK
 		frame.id |= unix.CAN_EFF_FLAG
 	case RTR:
-		id &= unix.CAN_EFF_MASK
+		if id > unix.CAN_EFF_MASK {
+			return nil, fmt.Errorf("RTR frame type IDs only support up to 29 bits (maximum value %d)", unix.CAN_EFF_MASK)
+		}
+		frame.id &= unix.CAN_EFF_MASK
 		frame.id |= unix.CAN_RTR_FLAG
 	case ERR:
-		id &= unix.CAN_ERR_MASK
+		if id > unix.CAN_EFF_MASK {
+			return nil, fmt.Errorf("ERR frame type IDs only support up to 29 bits (maximum value %d)", unix.CAN_EFF_MASK)
+		}
+		frame.id &= unix.CAN_ERR_MASK
 		frame.id |= unix.CAN_ERR_FLAG
 	default:
 		return nil, fmt.Errorf("Invalid frame type")
 	}
 
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, frame)
+	binary.Write(buf, binary.BigEndian, frame)
 	return buf.Bytes(), nil
 }
