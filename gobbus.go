@@ -110,7 +110,7 @@ type ObbusOpts struct {
 
 func NewObbus(conn io.ReadWriteCloser, opts ...*ObbusOpts) *Obbus {
 	tout := time.Second * 300
-	cmdTout := time.Second * 3
+	cmdTout := time.Second * 6
 	debug := false
 	label := ""
 	if len(opts) != 0 {
@@ -193,9 +193,13 @@ func (o *Obbus) Close(err error) {
 	o.indexToTopic = map[int]string{}
 	o.topicTableLock.Unlock()
 	o.subscriptionsLock.Lock()
+	closed := map[chan *Message]bool{}
 	for _, subs := range o.subscriptions {
 		for _, ch := range subs {
-			close(ch)
+			if _, ok := closed[ch]; !ok {
+				closed[ch] = true
+				close(ch)
+			}
 		}
 	}
 	o.subscriptions = map[string][]chan *Message{}
