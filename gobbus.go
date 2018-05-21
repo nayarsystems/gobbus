@@ -98,18 +98,21 @@ type Obbus struct {
 	keepAliveTimer    *time.Timer
 	SyncCmdTimeout    time.Duration
 	Debug             bool
+	DebugLabel        string
 }
 
 type ObbusOpts struct {
 	Timeout        time.Duration
 	SyncCmdTimeout time.Duration
 	Debug          bool
+	DebugLabel     string
 }
 
 func NewObbus(conn io.ReadWriteCloser, opts ...*ObbusOpts) *Obbus {
 	tout := time.Second * 300
 	cmdTout := time.Second * 3
 	debug := false
+	label := ""
 	if len(opts) != 0 {
 		if opts[0].Timeout != 0 {
 			tout = opts[0].Timeout
@@ -119,6 +122,9 @@ func NewObbus(conn io.ReadWriteCloser, opts ...*ObbusOpts) *Obbus {
 		}
 		if opts[0].Debug {
 			debug = true
+		}
+		if opts[0].DebugLabel != "" {
+			label = opts[0].DebugLabel + " "
 		}
 	}
 
@@ -147,6 +153,7 @@ func NewObbus(conn io.ReadWriteCloser, opts ...*ObbusOpts) *Obbus {
 		keepAliveTimer:    time.NewTimer(tout),
 		SyncCmdTimeout:    cmdTout,
 		Debug:             debug,
+		DebugLabel:        label,
 	}
 
 	go obbus.recvWorker()
@@ -168,7 +175,7 @@ func (o *Obbus) Close(err error) {
 	if err != nil && o.err == nil {
 		o.err = err
 		if o.Debug {
-			log.Printf("!! %s\n", err.Error())
+			log.Printf("%s!! %s\n", o.DebugLabel, err.Error())
 		}
 	}
 	o.syncLock.Lock()
@@ -229,7 +236,7 @@ func (o *Obbus) recvWorker() {
 			break
 		}
 		if o.Debug {
-			log.Printf("<< %v\n", recv)
+			log.Printf("%s<< %v\n", o.DebugLabel, recv)
 		}
 		cmd := ei.N(recv[0]).IntZ()
 		if cmd == cmdMessage {

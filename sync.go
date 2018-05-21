@@ -63,7 +63,7 @@ func (o *Obbus) syncCmd(cmd int, vals ...interface{}) (msg *syncMsg, err error) 
 	o.writeLock.Unlock()
 
 	if o.Debug {
-		log.Printf(">> %v\n", vals)
+		log.Printf("%s>> %v\n", o.DebugLabel, vals)
 	}
 
 	if cmd == cmdPublish || cmd == cmdClose {
