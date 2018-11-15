@@ -269,6 +269,8 @@ func (o *Obbus) handleMessage(recv []interface{}) {
 	}
 	v := recv[3]
 	switch val := v.(type) {
+	case float32:
+		v = float64(val)
 	case int64:
 		v = int(val)
 	case uint64:
