@@ -186,7 +186,7 @@ func main() {
 									return
 								}
 
-								i, err := bus.RpcStr(topic, val, parseFlags(flags), time.Duration(timeoutms*1000))
+								i, err := bus.RpcStr(topic, val, parseFlags(flags), time.Millisecond*time.Duration(timeoutms*1000))
 								if err != nil {
 									rej(err.Error())
 								} else {
